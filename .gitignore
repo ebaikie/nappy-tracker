@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+nappy_tracker.db
+wd-patch.xpi
