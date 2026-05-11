@@ -31,7 +31,7 @@ DB_PATH = "nappy_tracker.db"
 # stock/pricing for the right store rather than the IP-geolocation default.
 FOODSTUFFS_STORE_IDS = {
     "newworld.co.nz":  "be37802e-1355-466e-9a1b-1ede5a099705",  # New World Hastings
-    "paknsave.co.nz":  None,  # IP-based default (Hawke's Bay) works
+    "paknsave.co.nz":  "b39562a4-2b72-43fe-b9ba-eda1d651ad0b",  # Pak'nSave Hastings
 }
 
 HEADERS = {
