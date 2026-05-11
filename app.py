@@ -67,7 +67,6 @@ def init_db():
             );
         """)
         _migrate_db(conn)
-        _seed_default_variants(conn)
 
 def _migrate_db(conn):
     row = conn.execute("SELECT sql FROM sqlite_master WHERE name='variants' AND type='table'").fetchone()
@@ -95,29 +94,6 @@ def _migrate_db(conn):
         conn.execute("ALTER TABLE price_history ADD COLUMN is_club INTEGER NOT NULL DEFAULT 0")
         logger.info("DB migrated: added is_club to price_history")
 
-def _seed_default_variants(conn):
-    """Seed known Size 5 variants. URLs are placeholders — edit via UI."""
-    seeds = [
-        # (retailer, product_type, size, pack_count, url, notes)
-        ("Woolworths", "pants",   5, 26, "https://www.woolworths.co.nz/shop/productdetails?stockcode=PLACEHOLDER_WW_PANTS_5_26",  "26pk"),
-        ("Woolworths", "nappies", 5, 32, "https://www.woolworths.co.nz/shop/productdetails?stockcode=PLACEHOLDER_WW_NAP_5_32",    "32pk"),
-        ("Pak'nSave",  "pants",   5, 26, "https://www.paknsave.co.nz/shop/product/PLACEHOLDER_PNS_PANTS_5_26",                     "26pk"),
-        ("Pak'nSave",  "nappies", 5, 32, "https://www.paknsave.co.nz/shop/product/PLACEHOLDER_PNS_NAP_5_32",                       "32pk"),
-        ("New World",  "pants",   5, 26, "https://www.newworld.co.nz/shop/product/PLACEHOLDER_NW_PANTS_5_26",                      "26pk"),
-        ("New World",  "nappies", 5, 32, "https://www.newworld.co.nz/shop/product/PLACEHOLDER_NW_NAP_5_32",                        "32pk"),
-        ("The Warehouse", "pants",   5, 96, "https://www.thewarehouse.co.nz/p/PLACEHOLDER_TW_PANTS_5_96",                         "96pk box"),
-        ("The Warehouse", "nappies", 5, 96, "https://www.thewarehouse.co.nz/p/PLACEHOLDER_TW_NAP_5_96",                           "96pk box"),
-        ("Chemist Warehouse", "pants",   5, 26, "https://www.chemistwarehouse.co.nz/buy/PLACEHOLDER_CW_PANTS_5_26",               "26pk"),
-        ("Chemist Warehouse", "nappies", 5, 32, "https://www.chemistwarehouse.co.nz/buy/PLACEHOLDER_CW_NAP_5_32",                 "32pk"),
-    ]
-    for s in seeds:
-        try:
-            conn.execute(
-                "INSERT OR IGNORE INTO variants (retailer, product_type, size, pack_count, url, notes) VALUES (?,?,?,?,?,?)",
-                s
-            )
-        except Exception as e:
-            logger.warning(f"Seed skip: {e}")
 
 # ---------------------------------------------------------------------------
 # Scrapers
