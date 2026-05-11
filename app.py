@@ -27,6 +27,13 @@ logger = logging.getLogger(__name__)
 
 DB_PATH = "nappy_tracker.db"
 
+# Foodstuffs NZ store UUIDs — set per domain so the server returns
+# stock/pricing for the right store rather than the IP-geolocation default.
+FOODSTUFFS_STORE_IDS = {
+    "newworld.co.nz":  "be37802e-1355-466e-9a1b-1ede5a099705",  # New World Hastings
+    "paknsave.co.nz":  None,  # IP-based default (Hawke's Bay) works
+}
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -206,8 +213,14 @@ def _scrape_foodstuffs(url: str) -> dict:
     try:
         from curl_cffi import requests as cf
         from bs4 import BeautifulSoup as BS
+        from urllib.parse import urlparse
+        domain = urlparse(url).netloc.lstrip("www.")
+        store_id = FOODSTUFFS_STORE_IDS.get(domain)
+        cookies = {}
+        if store_id:
+            cookies = {"STORE_ID_V2": f"{store_id}|False", "eCom_STORE_ID": store_id}
         s = cf.Session(impersonate="chrome124")
-        r = s.get(url, headers=HEADERS, timeout=20)
+        r = s.get(url, headers=HEADERS, cookies=cookies, timeout=20)
         if "Just a moment" in r.text:
             return {"price": None, "in_stock": False, "error": "cloudflare_blocked"}
         soup = BS(r.text, "html.parser")
