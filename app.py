@@ -11,9 +11,10 @@ import json
 import time
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import re
+import threading
 
 app = Flask(__name__)
 CORS(app)
@@ -489,7 +490,29 @@ def index():
 # Main
 # ---------------------------------------------------------------------------
 
+def daily_scrape_loop():
+    import pytz
+    from datetime import timedelta
+    tz = pytz.timezone("Pacific/Auckland")
+    while True:
+        now = datetime.now(tz)
+        target = now.replace(hour=11, minute=0, second=0, microsecond=0)
+        if now >= target:
+            target += timedelta(days=1)
+        wait = (target - now).total_seconds()
+        logger.info(f"Daily scrape scheduled in {wait/3600:.1f}h (at 11:00 NZST)")
+        time.sleep(wait)
+        logger.info("Daily auto-scrape starting...")
+        with app.app_context():
+            try:
+                with app.test_request_context('/api/scrape', method='POST', json={}):
+                    scrape_all()
+                logger.info("Daily auto-scrape complete")
+            except Exception as e:
+                logger.error(f"Daily auto-scrape failed: {e}")
+
 if __name__ == "__main__":
     init_db()
     logger.info("Nappy Tracker backend starting on port 5051")
+    threading.Thread(target=daily_scrape_loop, daemon=True).start()
     app.run(host="0.0.0.0", port=5051, debug=False)
