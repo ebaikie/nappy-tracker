@@ -1,72 +1,35 @@
 # Nappy Tracker
 
-Price tracker for Huggies Ultra Dry (Nappy Pants + Nappies) across NZ retailers.
-Runs on nosy box (192.168.4.127) at port 5051.
+Price tracker for Huggies Ultra Dry nappies and nappy pants across NZ retailers. Scrapes prices daily and shows history charts so you can buy at the right time.
 
-## Setup
+## Retailers
 
-```bash
-cd ~/nappy-tracker
-pip install -r requirements.txt --break-system-packages
-python app.py
-```
+| Retailer | Method |
+|----------|--------|
+| Woolworths NZ | Selenium |
+| New World | curl_cffi |
+| Pak'nSave | curl_cffi |
+| The Warehouse | Selenium |
+| Chemist Warehouse | curl_cffi |
 
-Or as a systemd service:
+## Stack
 
-```ini
-[Unit]
-Description=Nappy Tracker
-After=network.target
+Flask + SQLite backend, React (JSX via CDN) frontend. Runs as a systemd service.
 
-[Service]
-WorkingDirectory=/home/eli/nappy-tracker
-ExecStart=/usr/bin/python3 /home/eli/nappy-tracker/app.py
-Restart=always
-User=eli
+## Features
 
-[Install]
-WantedBy=multi-user.target
-```
+- Daily auto-scrape at 11:00 NZST
+- Manual refresh via UI
+- Price history charts per variant
+- Tracks nappies and nappy pants separately across sizes
+
+## Running
 
 ```bash
-sudo cp nappy-tracker.service /etc/systemd/system/
-sudo systemctl enable --now nappy-tracker
+sudo systemctl status nappy-tracker
+sudo journalctl -u nappy-tracker -f
 ```
-
-## First run
-
-1. Start the backend
-2. Open the UI, click **Configure**
-3. For each row, click **Edit** and paste the actual product URL from the retailer's site
-4. Click **↻ Refresh Prices** — scrapers will run and you'll see what breaks
-
-## Scraper quirks (expected)
-
-Each retailer will likely need selector tweaks. The scraper functions are in `app.py`
-under `scrape_woolworths()`, `scrape_paknsave()` etc. They all return:
-
-```python
-{"price": 24.99, "in_stock": True}
-# or
-{"price": None, "in_stock": False, "error": "reason"}
-```
-
-Foodstuffs sites (Pak'nSave, New World) are JS-rendered and may need their
-internal API endpoint rather than HTML scraping. Check Network tab in devtools
-for `/api/products/...` calls.
 
 ## Database
 
-SQLite at `nappy-tracker.db` in the working directory.
-Tables: `variants`, `price_history`.
-
-## API
-
-- `GET  /api/prices/latest`       — latest price per variant
-- `POST /api/scrape`              — trigger scrape of all active variants
-- `GET  /api/variants`            — list all variants
-- `POST /api/variants`            — add variant
-- `PUT  /api/variants/:id`        — update variant (url, pack_count, etc.)
-- `DELETE /api/variants/:id`      — soft-delete variant
-- `GET  /api/prices/history`      — all history (for charts)
-- `GET  /health`                  — health check
+SQLite at `nappy_tracker.db`. Tables: `variants`, `price_history`.
